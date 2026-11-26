@@ -1,66 +1,50 @@
 import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 import java.security.MessageDigest
-import java.util.zip.ZipInputStream
 
-apply from: 'dex2jar.gradle'
+// Fetch the Vanilla Archive!
+// Checks for `apks`, `apkm` and `xapk`
+def findVanillaArchive = {
+	def exts = [".apks", ".apkm", ".xapk"]
+	def matches = rootDir.listFiles({ d, name ->
+		def lower = name.toLowerCase()
+		return lower.startsWith("vanilla") && exts.any { lower.endsWith(it) } && new File(d, name).isFile()
+	} as FilenameFilter)
+	return (matches && matches.length > 0) ? matches[0] : null
+}
 
 tasks.register('extractVanillaApk') {
-	description = "Extracts a Vanilla APK into the build dir. Use -Path='/path/to/vanilla.apk' to provide the APK."
-
-	def ath = project.providers.gradleProperty("ath")
-	def path = project.providers.gradleProperty("Path")
+	description = "Extracts a Vanilla APK into the build dir."
 
 	onlyIf {
 		def buildDir = layout.buildDirectory.get().asFile
 		def vd = file("${buildDir}/vanilla")
-
 		return !vd.exists() || !vd.isDirectory() || (vd.list().length == 0)
 	}
 
 	doLast {
 		def buildDir = layout.buildDirectory.get()
 		def extractDir = file("${buildDir}/vanilla")
+		def archive = findVanillaArchive()
 
-		Path apkPath
-		if (ath.present) {
-			apkPath = Paths.get(ath.get())
-		} else if (path.present) {
-			apkPath = Paths.get(path.get())
-		} else if (file("../vanilla.apk").exists()) {
-			apkPath = file("../vanilla.apk").toPath()
-		} else throw new GradleException("Vanilla APK is required: `./gradlew ... -Path='/path/to/apk'`")
-
-		if (!apkPath.isAbsolute()) {
-			apkPath = Paths.get(System.getProperty('user.dir')).resolve(apkPath).normalize()
+		if (!archive || !archive.exists() || !archive.isFile()) {
+			throw new GradleException("Vanilla archive not found in project root...")
 		}
 
-		def apkFile = apkPath.toFile()
-		if (!apkFile.exists() || !apkFile.isFile())
-			throw new GradleException("Invalid APK path: ${apkFile.absolutePath}")
-
-		println "Using apk: ${apkPath}"
+		println "Using archive: ${archive.absolutePath}"
 		println "Extracting to ${extractDir}"
 
-		try {
-			new ZipInputStream(new FileInputStream(apkFile)).withCloseable { zip ->
-				def entry
-				while ((entry = zip.getNextEntry()) != null) {
-					def outputFile = new File(extractDir, entry.name)
-					if (entry.isDirectory()) {
-						outputFile.mkdirs()
-					} else {
-						outputFile.parentFile.mkdirs()
-						outputFile.withOutputStream { output ->
-							zip.transferTo(output)
-						}
-					}
-				}
+		FileHelper.unzipArchive(archive, extractDir)
+
+		def innerApks = []
+		extractDir.eachFileRecurse { f ->
+			if (f.isFile() && f.name.toLowerCase().endsWith(".apk")) {
+				innerApks.add(f)
 			}
-		} catch (e) {
-			throw new GradleException("Failed to extract! Make sure it is a valid APK.", e)
+		}
+
+		for (apk in innerApks) {
+			FileHelper.unzipArchive(apk, extractDir)
 		}
 	}
 }
@@ -68,14 +52,6 @@ tasks.register('extractVanillaApk') {
 tasks.register('copyVanillaLibs') {
 	description = "Copies the vanilla .so files into the source tree"
 	dependsOn "extractVanillaApk"
-
-//	onlyIf {
-//		def dir32 = file("src/main/jniLibs/armeabi-v7a")
-//		def dir64 = file("src/main/jniLibs/arm64-v8a")
-//
-//		// Only do task if music is missing, not dir, or empty dir.
-//		return !target32.exists() || !target32.isDirectory() || (target32.list().length == 0)
-//	}
 
 	doLast {
 		def buildDir = layout.buildDirectory.get()
@@ -87,29 +63,36 @@ tasks.register('copyVanillaLibs') {
 		Files.createDirectories(target32.toPath())
 		Files.createDirectories(target64.toPath())
 
-		Files.copy(
-			file("${apk}/lib/arm64-v8a/libopenal-soft.so").toPath(),
-			file("${target64}/libopenal-soft.so").toPath(),
-			StandardCopyOption.REPLACE_EXISTING
-		)
+		// This is like a powerful local function...
+		def locateLib = { List<String> dirKeywords, String libName ->
+			for (keyword in dirKeywords) {
+				def direct = file("${apk}/${keyword}/${libName}")
+				if (direct.exists() && direct.isFile()) return direct
+			}
+			File found = null
+			apk.eachFileRecurse { f ->
+				if (f.name == libName) {
+					def p = f.absolutePath.toLowerCase()
+					for (keyword in dirKeywords) {
+						if (p.contains(keyword.toLowerCase())) {
+							found = f
+							return
+						}
+					}
+				}
+			}
+			return found
+		}
 
-		Files.copy(
-			file("${apk}/lib/arm64-v8a/libswordigo.so").toPath(),
-			file("${target64}/libswordigo.so").toPath(),
-			StandardCopyOption.REPLACE_EXISTING
-		)
+		def arm64OpenAl = locateLib(["arm64-v8a", "arm64"], "libopenal-soft.so")
+		def arm64Swordigo = locateLib(["arm64-v8a", "arm64"], "libswordigo.so")
+		def arm32OpenAl = locateLib(["armeabi-v7a", "armeabi"], "libopenal-soft.so")
+		def arm32Swordigo = locateLib(["armeabi-v7a", "armeabi"], "libswordigo.so")
 
-		Files.copy(
-			file("${apk}/lib/armeabi-v7a/libopenal-soft.so").toPath(),
-			file("${target32}/libopenal-soft.so").toPath(),
-			StandardCopyOption.REPLACE_EXISTING
-		)
-
-		Files.copy(
-			file("${apk}/lib/armeabi-v7a/libswordigo.so").toPath(),
-			file("${target32}/libswordigo.so").toPath(),
-			StandardCopyOption.REPLACE_EXISTING
-		)
+		if (arm64OpenAl) Files.copy(arm64OpenAl.toPath(), file("${target64}/libopenal-soft.so").toPath(), StandardCopyOption.REPLACE_EXISTING)
+		if (arm64Swordigo) Files.copy(arm64Swordigo.toPath(), file("${target64}/libswordigo.so").toPath(), StandardCopyOption.REPLACE_EXISTING)
+		if (arm32OpenAl) Files.copy(arm32OpenAl.toPath(), file("${target32}/libopenal-soft.so").toPath(), StandardCopyOption.REPLACE_EXISTING)
+		if (arm32Swordigo) Files.copy(arm32Swordigo.toPath(), file("${target32}/libswordigo.so").toPath(), StandardCopyOption.REPLACE_EXISTING)
 	}
 }
 
@@ -123,16 +106,15 @@ tasks.register('copyVanillaResources') {
 
 		Files.createDirectories(file("src/main/assets/resources/").toPath())
 
-		FileHelper.copyDirectory(
-			file("${apk}/assets/resources"),
-			file("src/main/assets/resources/")
-		)
+		def resDir = file("${apk}/assets/resources")
+		if (resDir.exists()) {
+			FileHelper.copyDirectory(resDir, file("src/main/assets/resources/"))
+		}
 
-		Files.copy(
-			file("${apk}/assets/README").toPath(),
-			file("src/main/assets/README").toPath(),
-			StandardCopyOption.REPLACE_EXISTING
-		)
+		def readme = file("${apk}/assets/README")
+		if (readme.exists()) {
+			Files.copy(readme.toPath(), file("src/main/assets/README").toPath(), StandardCopyOption.REPLACE_EXISTING)
+		}
 	}
 }
 
@@ -142,8 +124,6 @@ tasks.register('copyVanillaMusic') {
 
 	onlyIf {
 		def musicFolder = file("src/main/assets/music/")
-
-		// Only do task if music is missing, not dir, or empty dir.
 		return !musicFolder.exists() || !musicFolder.isDirectory() || (musicFolder.list().length != 9)
 	}
 
@@ -166,18 +146,14 @@ tasks.register('copyVanillaMusic') {
 		)
 
 		def res = file("${apk}/res")
-
-		res.eachFile { File f ->
-			if (f.isDirectory()) return
-
-			musicMap.each { m ->
+		if (res.exists()) {
+			res.eachFileRecurse { File f ->
+				if (f.isDirectory()) return
 				def sha256 = MessageDigest.getInstance("SHA-256").digest(f.bytes).encodeHex().toString()
-				if (m.key == sha256) {
-					println "Copying ${f.name} -> ${m.value}"
-
+				if (musicMap.containsKey(sha256)) {
 					Files.copy(
 						f.toPath(),
-						file("src/main/assets/music/${m.value}").toPath(),
+						file("src/main/assets/music/${musicMap.get(sha256)}").toPath(),
 						StandardCopyOption.REPLACE_EXISTING
 					)
 				}
@@ -192,7 +168,6 @@ tasks.register('extractVanilla') {
 	dependsOn "copyVanillaLibs"
 	dependsOn "copyVanillaResources"
 	dependsOn "copyVanillaMusic"
-	dependsOn "copyVanillaClasses"
 }
 
 tasks.register('cleanVanilla') {
@@ -201,7 +176,6 @@ tasks.register('cleanVanilla') {
 		def buildDir = layout.buildDirectory.get()
 
 		def apk = file("${buildDir}/vanilla")
-		def classes = file("${buildDir}/vanillaClasses")
 		def jniLibs = file("src/main/jniLibs")
 		def libs = file("libs")
 
@@ -210,7 +184,6 @@ tasks.register('cleanVanilla') {
 		def readme = file("src/main/assets/README")
 
 		FileHelper.deleteDirectoryIfExists(apk)
-		FileHelper.deleteDirectoryIfExists(classes)
 		FileHelper.deleteDirectoryIfExists(jniLibs)
 		FileHelper.deleteDirectoryIfExists(libs)
 
