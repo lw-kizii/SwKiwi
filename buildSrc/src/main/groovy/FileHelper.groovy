@@ -3,8 +3,28 @@ import groovy.io.FileType
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
+import java.util.zip.ZipInputStream
 
 class FileHelper {
+
+	static void unzipArchive(File zipFile, File targetDir) {
+		targetDir.mkdirs()
+		new ZipInputStream(new FileInputStream(zipFile)).withCloseable { zip ->
+			def entry
+			while ((entry = zip.getNextEntry()) != null) {
+				def outFile = new File(targetDir, entry.name)
+				if (entry.isDirectory()) {
+					outFile.mkdirs()
+				} else {
+					outFile.parentFile.mkdirs()
+					outFile.withOutputStream { out ->
+						zip.transferTo(out)
+					}
+				}
+			}
+		}
+	}
+
 	static void copyDirectory(File dirFrom, File dirTo) {
 		if (!dirFrom.exists()) throw new NoSuchFileException(dirFrom.toString())
 
