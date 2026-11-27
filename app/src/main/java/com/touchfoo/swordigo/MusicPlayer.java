@@ -7,11 +7,6 @@ import android.media.MediaPlayer;
 
 import java.io.IOException;
 
-/**
- * We have to suppress this because they are libswordigo functions which java doesn't know about.
- *
- * @noinspection JavaJniMissingFunction unused
- */
 public class MusicPlayer implements MediaPlayer.OnErrorListener, MediaPlayer.OnPreparedListener {
 	Activity activity;
 	String currentFileName = "";
@@ -120,14 +115,11 @@ public class MusicPlayer implements MediaPlayer.OnErrorListener, MediaPlayer.OnP
 	}
 
 	public void setLooping(boolean var1) {
-		// Debug.Log("MusicPlayer setLooping! " + var1);
 		this.looping = var1;
 		this.updateLoopingSetting();
 	}
 
 	public void setVolume(float var1) {
-		// Debug.Log("MusicPlayer setVolume!" + var1);
-
 		this.volume = var1;
 		this.updateVolumeSetting();
 	}

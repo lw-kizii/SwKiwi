@@ -1,486 +1,213 @@
 package com.touchfoo.swordigo;
 
-import android.content.ClipData;
-import android.content.ClipboardManager;
+import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.content.res.AssetManager;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.util.Log;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
 
-import net.itsjustsomedude.swrdg.GameActions;
-import net.itsjustsomedude.swrdg.MainActivity;
-import net.itsjustsomedude.swrdg.ModProperties;
+import androidx.annotation.Keep;
 
-import java.lang.ref.WeakReference;
-import java.util.Objects;
-
-/**
- * We have to suppress this because they are libswordigo functions which java doesn't know about.
- *
- * @noinspection JavaJniMissingFunction unused
- */
+@SuppressLint("all")
+@SuppressWarnings("all")
+@Keep
 public class Native {
-	public static WeakReference<MainActivity> mainActivityRef;
 
+	public static Object mainActivity;
+
+	public static native void setFilesDir(String path);
+	public static native void setCacheDir(String path);
+	public static native void setAssetManager(AssetManager assetManager);
+	public static native void handleApplicationLaunch();
+	public static native void setupNativeInterface();
+	public static native void setupApplication();
+	public static native void updateApplication(float dt);
+	public static native void drawApplication();
+	public static native void reloadContext();
+	public static native void handleApplicationQuit();
 	public static native void applicationDidBecomeActive();
-
 	public static native void applicationDidBecomeInactive();
-
 	public static native void applicationDidEnterBackground();
-
 	public static native void applicationDidEnterForeground();
+	public static native void handleBackButtonPress();
+	public static native void handleMenuButtonPress();
+	public static native void handleTouchEvent(int i, int i2, double d,
+											   float f, float f2,
+											   float f3, float f4, int i3);
+	public static native String uniqueIdentifier();
+	public static native void setApplicationViewSize(int width, int height,
+													 boolean b, int i3, int i4);
+	public static native void textInputTextDidChange(String text);
+	public static native void textInputDidFinish();
 
-	public static MainActivity getActivity() {
-		if (mainActivityRef == null) return null;
-		return mainActivityRef.get();
-	}
-
-	public static boolean checkPromotion(String var0) {
-		Debug.Log("Native.checkPromotion: " + var0);
+	public static boolean isGoogleGameServicesAvailable() {
 		return false;
 	}
 
-	public static void consumePurchasesForTesting() {
-		MainActivity mainActivity = getActivity();
-		if (mainActivity == null) return;
-
-		mainActivity.runOnUiThread(() -> {
-//                Native.mainActivity.storeController.consumePurchasesForTesting();
-//                Native.mainActivity.gameServices.adsHelper.enableTestAds();
-			mainActivity.persistentState.setDelayMillisToReviewFlow(0L);
-			mainActivity.persistentState.setTotalForegroundMillisForReviewFlow(7200000L);
-		});
+	public static void loadSnapshot(String name, double unused) {
 	}
 
-	public static void copyToClipboard(String var0, String var1) {
-		MainActivity mainActivity = getActivity();
-		if (mainActivity == null) return;
-
-		mainActivity.runOnUiThread(() ->
-			((ClipboardManager) mainActivity
-				.getSystemService(Context.CLIPBOARD_SERVICE))
-				.setPrimaryClip(ClipData.newPlainText(var0, var1))
-		);
+	public static void deleteSnapshot(String name) {
+		Log.i("SwordigoRuntime", "deleteSnapshot stub: " + name);
 	}
 
-	public static native void debugFunction();
-
-	public static void deleteSnapshot(String var0) {
-		GameActions.deleteSnapshot(var0);
+	public static int getInterstitialAdInterval(String placement, int defaultValue) {
+		return Integer.MAX_VALUE;
 	}
 
-	public static native void drawApplication();
+	public static void interstitialAdVisibilityChanged(boolean visible) { }
+	public static void loadInterstitialAd() { }
 
-	public static void enteredAge(int var0) {
-		saveIntInSP("knownAge", var0);
-		Debug.Log("Saved age: " + var0);
-//        if (isAgeKnown() && !isAgeOfConsent()) {
-//            mainActivity.runOnUiThread(() -> {
-//                Debug.Log("Not age of consent");
-////                    Native.mainActivity.gameServices.adsHelper.start();
-//            });
-//        }
-
-	}
-
-	public static native void finishedRestoringPurchases();
-
-	public static String getAnalyticsId() {
-//        String var1 = mainActivity.analytics.getFormattedAppInstanceId();
-//        String var0 = var1;
-//        if (var1 == null) {
-//            var0 = "";
-//        }
-//
-//        return var0;
-		return "";
-	}
-
-	// NOT called from native!
-	public static boolean getBooleanFromSP(String var0) {
-		MainActivity mainActivity = getActivity();
-		if (mainActivity == null) return false;
-
-		return mainActivity.getApplicationContext().getSharedPreferences("SwordigoPreferences", 0).getBoolean(var0, false);
-	}
-
-	// NOT called from native!
-	public static int getIntFromSP(String var0) {
-		MainActivity mainActivity = getActivity();
-		if (mainActivity == null) return 0;
-
-		return mainActivity.getApplicationContext().getSharedPreferences("SwordigoPreferences", 0).getInt(var0, 0);
-	}
-
-	public static int getInterstitialAdInterval(String var0, int var1) {
-//        var1 = (int)RemoteConfig.getInstance().getAdIntervalSeconds(var0, (long)var1);
-//        StringBuilder var2 = new StringBuilder("Native.getInterstitialAdInterval: ");
-//        var2.append(var0);
-//        var2.append(" = ");
-//        var2.append(var1);
-//        Debug.Log(var2.toString());
-//        return var1;
-		return 1000000000;
-	}
-
-	public static int getPlatformConsentState() {
-//        mainActivity.runOnUiThread(new Runnable() {
-//            public void run() {
-//                Native.mainActivity.gameServices.adsHelper.startConsentInfoRequestIfNecessary();
-//            }
-//        });
-//        int var1 = null.$SwitchMap$com$touchfoo$swordigo$AdsHelper$ConsentStatus[mainActivity.gameServices.adsHelper.getCurrentConsentStatus().ordinal()];
-//        byte var0 = 1;
-//        if (var1 != 1) {
-//            var0 = 2;
-//            if (var1 != 2) {
-//                return 0;
-//            }
-//        }
-//
-//        return var0;
-		return 0;
-	}
-
+	public static void productPurchased(String productId) { }
+	public static void productPurchaseFailed(String productId, String error) { }
+	public static void startedRestoringPurchases() { }
+	public static void finishedRestoringPurchases() { }
+	public static void storeProductFetched(String productId, String price, String title) { }
+	public static void storeProductFetchFailed(String productId, String error) { }
 	public static String getStoreName() {
-		//return mainActivity.storeController != null ? mainActivity.storeController.storeName() : "";
-		return "";
+		return "play_store";
 	}
 
-	public static native void googleSignInCompleted(boolean var0);
+	@Keep
+	public static void signInToGoogleGameServices() { }
 
-	public static native void handleApplicationLaunch();
+	@Keep
+	public static void showAchievements() { }
 
-	public static native void handleApplicationQuit();
+	@Keep
+	public static void showLeaderboards() { }
 
-	public static native void handleBackButtonPress();
+	@Keep
+	public static void saveSnapshot(String name, byte[] data, String description) { }
 
-	public static native void handleMenuButtonPress();
-
-	public static native void handleTouchEvent(int var0, int var1, double var2, float var4, float var5, float var6, float var7, int var8);
-
-	public static boolean hasPrivacyConsent() {
-		return getBooleanFromSP("privacyConsent");
-	}
-
-	public static void initiateGoogleSignIn() {
-		GameActions.openURL(
-			ModProperties.links.getOrDefault("google", "overlay:")
-		);
-//        mainActivity.runOnUiThread(new Runnable() {
-//            public void run() {
-//                Debug.Log("initiateGoogleSignIn called from native");
-//                if (Native.mainActivity.gamesSignIn != null) {
-//                    Native.mainActivity.gamesSignIn.beginInteractiveSignIn();
-//                }
-//            }
-//        });
-	}
-
-	public static native void interstitialAdVisibilityChanged(boolean var0);
-
-	public static boolean isAgeKnown() {
-		return knownAge() != 0;
-	}
-
-	public static boolean isAgeOfConsent() {
-		return knownAge() >= 16;
-	}
-
-	public static boolean isExplicitPrivacyConsent() {
-		return getBooleanFromSP("explicitConsent");
-	}
-
-	public static boolean isGoogleGameServicesAvailable() {
-		return ModProperties.googleVisible;
-	}
-
-	// NOT called from native!
-	public static int knownAge() {
-		return getIntFromSP("knownAge");
-	}
-
-	public static void loadInterstitialAd() {
-//		MainActivity mainActivity = getActivity();
-//		if (mainActivity == null) return;
-//
-//		mainActivity.runOnUiThread(() -> {
-//			Debug.Log("Sync: loadInterstitialAd() called from native");
-//			if (mainActivity.gameServices != null && mainActivity.gameServices.adsHelper != null) {
-//				mainActivity.gameServices.adsHelper.loadInterstitialIfNecessary();
-//			}
-//		});
-	}
-
-	public static void loadSnapshot(String var0, double var1) {
-		GameActions.loadSnapshot(var0, var1);
-	}
-
-	public static void openURL(String url) {
-		Debug.Log("Open URL: " + url);
-
-		final String twitter = "http://www.twitter.com/touch_foo";
-		final String facebook = "http://www.facebook.com/144881932264830";
-		final String privacy = "http://privacy.touchfoo.com/";
-
-		if (Objects.equals(url, twitter)) {
-			GameActions.openURL(ModProperties.links.getOrDefault("twitter", twitter));
-		} else if (Objects.equals(url, facebook)) {
-			GameActions.openURL(ModProperties.links.getOrDefault("facebook", facebook));
-		} else if (Objects.equals(url, privacy)) {
-			GameActions.openURL(ModProperties.links.getOrDefault("privacy", privacy));
-		} else {
-			GameActions.openURL(url);
+	public static void queueStoreProductFetch(String productId) {
+		if (GameView.instance != null) {
+			GameView.instance.queueEvent(() -> {
+				try {
+					Native.storeProductFetchFailed(productId, "no_store_backend");
+				} catch (Throwable t) {
+					Log.e("SwordigoRuntime", "storeProductFetchFailed failed", t);
+				}
+			});
 		}
-	}
-
-	public static void prepareReviewFlow() {
 	}
 
 	public static void processStoreQueue() {
-//		MainActivity mainActivity = getActivity();
-//		if (mainActivity == null) return;
-//
-//		mainActivity.runOnUiThread(() -> {
-//			mainActivity.storeController.processQueue();
-//		});
 	}
 
-	public static native void productPurchaseFailed(String var0, String var1);
-
-	public static native void productPurchased(String var0);
-
-	public static void purchaseStoreProduct(String identifier) {
-//		MainActivity mainActivity = getActivity();
-//		if (mainActivity == null) return;
-//
-//		mainActivity.runOnUiThread(() -> {
-//			mainActivity.storeController.purchaseProduct(mainActivity, identifier);
-//		});
+	public static void googleSignInCompleted(boolean success) { }
+	public static void reviewFlowCompleted() { }
+	public static void reportAchievementProgress(String achievementId, int progress, boolean completed) {
 	}
 
-	public static void queueStoreProductFetch(String identifier) {
-		// Unsure if I added the debug call or that's vanilla...
-		Debug.Log("Store Product Fetch called!");
-		debugFunction();
-
-//		MainActivity mainActivity = getActivity();
-//		if (mainActivity == null) return;
-//
-//		mainActivity.runOnUiThread(() -> {
-//			mainActivity.storeController.queueProductFetch(identifier);
-//		});
-	}
-
-	public static void quitApplication() {
-		MainActivity mainActivity = getActivity();
-		if (mainActivity == null) return;
-
-		mainActivity.runOnUiThread(() -> {
-			Debug.Log("quitApplication called from native");
-			mainActivity.moveTaskToBack(true);
-		});
-	}
-
-	public static void receivedPrivacyConsent(boolean var0) {
-		Debug.Log("Received privacy consent");
-		saveBooleanInSP("privacyConsent", true);
-		if (var0) {
-			saveBooleanInSP("explicitConsent", true);
+	public static void openURL(String url) {
+		if (mainActivity != null && mainActivity instanceof Activity) {
+			Activity activity = (Activity) mainActivity;
+			activity.runOnUiThread(() -> {
+				try {
+					android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_VIEW);
+					intent.setData(android.net.Uri.parse(url));
+					activity.startActivity(intent);
+				} catch (Exception e) {
+					android.util.Log.e("SwordigoRuntime", "Failed to open URL: " + url, e);
+				}
+			});
+		} else {
+			android.util.Log.e("SwordigoRuntime", "Cannot open URL: mainActivity is null or not an Activity.");
 		}
 	}
 
-	public static native void reloadContext();
+	public static void startTextInput(String initialText) {
+		Activity activity = (Activity) mainActivity;
+		if (activity == null || GameView.instance == null) {
+			Log.w("SwordigoRuntime", "Cant start text input");
+			return;
+		}
 
-	public static void reportAchievementProgress(String identifier, int stepsCompleted, boolean isIncremental) {
-		Debug.Log("Report Achievements called!");
+		activity.runOnUiThread(() -> {
+			EditText editText = new EditText(activity);
 
-//		MainActivity mainActivity = getActivity();
-//		if (mainActivity == null) return;
-//
-//		mainActivity.runOnUiThread(() -> {
-//			Debug.Log("reportAchievementProgress(" + identifier + ", " + stepsCompleted + ", " + isIncremental + ") called from native");
-//			mainActivity.gameServices.reportAchievementProgress(identifier, stepsCompleted, isIncremental);
-//		});
+			editText.setImeOptions(android.view.inputmethod.EditorInfo.IME_FLAG_NO_EXTRACT_UI
+					| android.view.inputmethod.EditorInfo.IME_ACTION_DONE);
+
+			editText.setInputType(android.text.InputType.TYPE_CLASS_TEXT
+					| android.text.InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+
+			editText.setBackground(null);
+			editText.setTextColor(android.graphics.Color.TRANSPARENT);
+			editText.setCursorVisible(false);
+			editText.setAlpha(0.0f);
+
+			editText.setText(initialText != null ? initialText : "");
+			editText.setFocusable(true);
+			editText.setFocusableInTouchMode(true);
+
+			ViewGroup root = activity.findViewById(android.R.id.content);
+			root.addView(editText, new ViewGroup.LayoutParams(1, 1));
+
+			editText.requestFocus();
+
+			InputMethodManager imm = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
+			editText.postDelayed(() -> {
+				imm.showSoftInput(editText, InputMethodManager.SHOW_FORCED);
+			}, 100);
+
+			editText.addTextChangedListener(new TextWatcher() {
+				@Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+				@Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+					final String text = s.toString();
+					GameView.instance.queueEvent(() -> {
+						try {
+							Native.textInputTextDidChange(text);
+						} catch (Throwable t) {
+							Log.e("SwordigoRuntime", "textInputTextDidChange failed", t);
+						}
+					});
+				}
+				@Override public void afterTextChanged(Editable s) {}
+			});
+
+			editText.setOnEditorActionListener((v, actionId, event) -> {
+				if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_DONE ||
+						(event != null && event.getAction() == android.view.KeyEvent.ACTION_DOWN &&
+								event.getKeyCode() == android.view.KeyEvent.KEYCODE_ENTER)) {
+					imm.hideSoftInputFromWindow(editText.getWindowToken(), 0);
+					root.removeView(editText);
+					GameView.instance.queueEvent(() -> {
+						try {
+							Native.textInputDidFinish();
+						} catch (Throwable t) {
+							Log.e("SwordigoRuntime", "textInputDidFinish failed", t);
+						}
+					});
+					return true;
+				}
+				return false;
+			});
+		});
 	}
-
-	public static native void reviewFlowCompleted();
-
-	// NOT called from native!
-	public static void saveBooleanInSP(String var0, boolean var1) {
-		MainActivity mainActivity = getActivity();
-		if (mainActivity == null) return;
-
-		SharedPreferences.Editor var2 = mainActivity.getApplicationContext().getSharedPreferences("SwordigoPreferences", 0).edit();
-		var2.putBoolean(var0, var1);
-		var2.apply();
-	}
-
-	// NOT called from native!
-	public static void saveIntInSP(String var0, int var1) {
-		MainActivity mainActivity = getActivity();
-		if (mainActivity == null) return;
-
-		SharedPreferences.Editor var2 = mainActivity.getApplicationContext().getSharedPreferences("SwordigoPreferences", 0).edit();
-		var2.putInt(var0, var1);
-		var2.apply();
-	}
-
-	public static void saveSnapshot(String name, byte[] data, String description, long timePlayedMillis, long progressValue) {
-		Debug.Log("Save Snapshot called!");
-
-		GameActions.saveSnapshot(name, data, description, timePlayedMillis, progressValue);
-	}
-
-	public static native void setApplicationViewSize(int var0, int var1, boolean var2);
-
-	public static native void setApplicationViewSize(int var0, int var1, boolean var2, int var3, int var4);
-	// 1.4.10
-
-	public static native void setAssetManager(AssetManager var0);
-
-	public static native void setCacheDir(String var0);
-
-	public static native void setFilesDir(String var0);
-
-	public static native void setupApplication();
-
-	public static native void setupNativeInterface();
-
-	public static void showAchievements() {
-		Debug.Log("Achievements called!");
-
-//		MainActivity mainActivity = getActivity();
-//		if (mainActivity == null) return;
-//
-//		mainActivity.runOnUiThread(() -> {
-//			Debug.Log("showAchievements called from native");
-//			mainActivity.gameServices.showAchievements();
-//		});
-	}
-
-	public static void showAnalyticsIdPopup() {
-		Debug.Log("Analytics called!");
-
-//		MainActivity mainActivity = getActivity();
-//		if (mainActivity == null) return;
-//
-//		mainActivity.runOnUiThread(() -> {
-//			Debug.Log("showAchievements called from native");
-//			mainActivity.analytics.showAppInstanceIdPopup();
-//		});
-	}
-
-	public static boolean showInterstitialAd(double delay) {
-		return false;
-
-//		MainActivity mainActivity = getActivity();
-//		if (mainActivity == null) return false;
-//
-//		if (mainActivity.gameServices == null || mainActivity.gameServices.adsHelper == null)
-//			return false;
-//
-//		if (!mainActivity.gameServices.adsHelper.canShowInterstitial()) {
-//			Debug.Log("Native.showInterstitialAd no ad ready");
-//			return false;
-//		}
-//
-//		mainActivity.runOnUiThread(() -> {
-//			Debug.Log("Native.showInterstitialAd(" + delay + ") called from native");
-//
-//			(new Handler()).postDelayed(() -> {
-//				if (mainActivity.gameServices == null || mainActivity.gameServices.adsHelper == null)
-//					return;
-//				mainActivity.gameServices.adsHelper.displayInterstitial();
-//			}, delay * 1000.0);
-//		});
-//
-//		return true;
-	}
-
-	// NOT called from native!
-	public static void showLeaderboards() {
-	}
-
-	public static void showPlatformConsentOptions() {
-//		MainActivity mainActivity = getActivity();
-//		if (mainActivity == null) return;
-//
-//		mainActivity.runOnUiThread(() -> {
-//			mainActivity.gameServices.adsHelper.showConsentForm();
-//		});
-	}
-
-	public static native void snapshotLoaded(String var0, byte[] var1);
-
-	public static void startAdsAndAnalytics() {
-//		MainActivity mainActivity = getActivity();
-//		if (mainActivity == null) return;
-//
-//		mainActivity.runOnUiThread(() -> {
-//			label17:
-//			{
-//				if (!Native.isAgeOfConsent()) {
-//					Debug.Log("Native.startAdsAndAnalytics: not starting analytics because underage");
-//				} else {
-//					if (mainActivity.gameServices.adsHelper.getCurrentConsentStatus() == ConsentStatus.NotRequired) {
-//						Debug.Log("Native.startAdsAndAnalytics: starting analytics");
-//						mainActivity.analytics.start();
-//						break label17;
-//					}
-//
-//					Debug.Log("Native.startAdsAndAnalytics: not starting analytics because platform consent required");
-//				}
-//
-//				if (Native.isAgeOfConsent()) {
-//					RemoteConfig.getInstance().startRemote();
-//				}
-//			}
-//
-//			Debug.Log("Native.startAdsAndAnalytics: starting ads");
-//			mainActivity.gameServices.adsHelper.start();
-//		});
-	}
-
-	public static boolean startReviewFlow() {
-		Debug.Log("Start review flow");
-//        mainActivity.runOnUiThread(() -> {
-//                Native.mainActivity.gameServices.startReviewFlow();
-//        });
-		return false;
-	}
-
-	public static void startTextInput(String var0) {
-		MainActivity mainActivity = getActivity();
-		if (mainActivity == null) return;
-
-		mainActivity.runOnUiThread(() -> mainActivity.StartGettingTextInput(var0));
-	}
-
-	public static native void startedRestoringPurchases();
 
 	public static void stopTextInput() {
-		MainActivity mainActivity = getActivity();
-		if (mainActivity == null) return;
+		Activity activity = (Activity) mainActivity;
+		if (activity == null) {
+			Log.w("SwordigoRuntime", "cant stop text input");
+			return;
+		}
 
-		mainActivity.runOnUiThread(mainActivity::StopGettingTextInput);
-	}
-
-	public static native void storeProductFetchFailed(String var0, String var1);
-
-	public static native void storeProductFetched(String var0, String var1, String var2);
-
-	public static native void textInputDidFinish();
-
-	public static native void textInputTextDidChange(String var0);
-
-	public static native String uniqueIdentifier();
-
-	public static native void updateApplication(float var0);
-
-	public static void withdrawPrivacyConsent() {
-		Debug.Log("Withdraw privacy consent");
-		saveBooleanInSP("privacyConsent", false);
-		saveBooleanInSP("explicitConsent", true);
+		activity.runOnUiThread(() -> {
+			InputMethodManager imm = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
+			View currentFocus = activity.getCurrentFocus();
+			if (currentFocus instanceof EditText) {
+				imm.hideSoftInputFromWindow(currentFocus.getWindowToken(), 0);
+				ViewGroup root = activity.findViewById(android.R.id.content);
+				root.removeView(currentFocus);
+			}
+		});
 	}
 }
-
