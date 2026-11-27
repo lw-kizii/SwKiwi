@@ -4,10 +4,12 @@ import android.app.Activity;
 import android.content.res.AssetFileDescriptor;
 import android.media.AudioAttributes;
 import android.media.MediaPlayer;
+import android.os.Bundle;
 
 import java.io.IOException;
 
 public class MusicPlayer implements MediaPlayer.OnErrorListener, MediaPlayer.OnPreparedListener {
+	public static MusicPlayer instance;
 	Activity activity;
 	String currentFileName = "";
 	String desiredFileName = "";
@@ -18,6 +20,7 @@ public class MusicPlayer implements MediaPlayer.OnErrorListener, MediaPlayer.OnP
 	float volume = 1.0F;
 
 	public MusicPlayer(Activity var1) {
+		instance = this;
 		this.activity = var1;
 		this.mediaPlayer = new MediaPlayer();
 
@@ -96,6 +99,7 @@ public class MusicPlayer implements MediaPlayer.OnErrorListener, MediaPlayer.OnP
 			}
 
 			AssetFileDescriptor afd = activity.getAssets().openFd(assetPath);
+
 			mediaPlayer.setDataSource(
 				afd.getFileDescriptor(),
 				afd.getStartOffset(),

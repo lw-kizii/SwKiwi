@@ -36,6 +36,10 @@ public class GameRenderer implements GLSurfaceView.Renderer {
 
 			if (!applicationSetup) {
 				Native.setupNativeInterface();
+                // I'll just set up MusicPlayer *after* surface creation
+				if (Native.mainActivity instanceof Activity) {
+					new MusicPlayer((Activity) Native.mainActivity);
+				}
 				Native.setupApplication();
 				applicationSetup = true;
 			} else {
