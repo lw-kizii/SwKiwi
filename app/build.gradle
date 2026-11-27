@@ -8,7 +8,7 @@ plugins {
 }
 
 android {
-	namespace = 'net.itsjustsomedude.swrdg'
+	namespace = 'net.kiwi.swordigo'
 	compileSdk = 36
 	ndkVersion = "29.0.14206865"
 
@@ -18,7 +18,7 @@ android {
 	}
 
 	defaultConfig {
-		applicationId 'net.itsjustsomedude.swrdg'
+		applicationId 'net.kiwi.swordigo'
 		minSdk = 24
 		targetSdk = 36
 		versionCode 46
@@ -56,7 +56,7 @@ android {
 			}
 		}
 		debug {
-			signingConfig = signingConfigs.release
+			signingConfig = signingConfigs.debug
 			debuggable true
 			minifyEnabled false
 
@@ -88,59 +88,19 @@ android {
 		}
 	}
 
-	applicationVariants.configureEach { /* com.android.build.gradle.internal.api.ApplicationVariantImpl */ variant ->
+	applicationVariants.configureEach { variant ->
 		variant.outputs.configureEach { output ->
 			if (variant.buildType.name == "release") {
-				def appName = "SwordigoMini"
+				def appName = "SwordigoKiwi"
 				def versionName = variant.versionName
 				def versionCode = variant.versionCode
 				outputFileName = "${appName}_${versionName}_${versionCode}.apk"
-			}
-		}
-
-		// TODO: Create a "mergeMiniAssets" task that does this and the Readme thing.
-		variant.mergeAssetsProvider.get().doLast {
-			File outputDir = it.outputDir.getAsFile().get()
-
-			// Ok, so we need to merge the `mini_resources` contents into the `resources` folder,
-			// then delete `mini_res_src` and `mini_resources`.
-
-			File resourcesDir = new File(outputDir, "resources")
-			File compiledRes = new File(outputDir, "res")
-
-			if (compiledRes.exists() && compiledRes.isDirectory() && resourcesDir.exists() && resourcesDir.isDirectory()) {
-				File gitignore = new File(compiledRes, ".gitignore")
-				if (gitignore.exists()) {
-					delete(gitignore)
-				}
-
-				copy {
-					from compiledRes
-					into resourcesDir
-				}
-			}
-
-			File miniResSrcDir = new File(outputDir, "mini_resources")
-			if (miniResSrcDir.exists()) {
-				delete(miniResSrcDir)
-			}
-
-			if (compiledRes.exists()) {
-				delete(compiledRes)
-			}
-
-			// Delete the .gitignore from the Rocks folder.
-			File rocksFolder = new File(outputDir, "rocks")
-			File rocksIgnore = new File(rocksFolder, ".gitignore")
-			if (rocksIgnore.exists()) {
-				delete(rocksIgnore)
 			}
 		}
 	}
 }
 
 dependencies {
-	implementation files('libs/renderer.jar')
 	implementation 'io.github.wasabithumb:jtoml:1.4.2'
 }
 
@@ -196,12 +156,6 @@ afterEvaluate {
 			it.dependsOn extractVanilla
 		}
 	}
-
-	tasks.withType(JavaCompile).tap {
-		configureEach {
-			it.dependsOn copyVanillaClasses
-		}
-	}
 }
 
 // Load sensitive values only from ~/.gradle/gradle.properties or <project>/local.properties
@@ -228,6 +182,9 @@ if (localProperties.containsKey('KEYSTORE_PASSWORD')) {
 		enableV2Signing = true
 		enableV3Signing = true
 	}
+} else {
+	android.buildTypes.release.signingConfig = android.signingConfigs.debug
+	android.buildTypes.debug.signingConfig = android.signingConfigs.debug
 }
 
 apply from: 'extractor.gradle'
