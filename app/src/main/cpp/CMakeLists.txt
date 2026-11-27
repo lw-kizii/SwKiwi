@@ -5,9 +5,19 @@ project("kiwi")
 add_library(kiwi SHARED
         main.c
 
+        # Core
+        core/log.h
+
         # Modding Framework!
         framework/framework.c
         framework/hooks.c
+)
+
+target_include_directories(
+        ${CMAKE_PROJECT_NAME} PRIVATE
+
+        ${CMAKE_CURRENT_SOURCE_DIR}/core
+        ${CMAKE_CURRENT_SOURCE_DIR}/framework
 )
 
 add_library(GlossHook SHARED IMPORTED)
